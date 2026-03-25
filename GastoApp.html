@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GastoApp</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f8fafc;font-family:system-ui,sans-serif;color:#111}
+.card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:16px;margin-bottom:12px}
+input,select{width:100%;padding:9px 11px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#111;font-size:14px;outline:none;font-family:system-ui}
+input:focus,select:focus{border-color:#6366f1}
+button{cursor:pointer;font-family:system-ui}
+.btn-primary{width:100%;padding:11px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600}
+.btn-secondary{width:100%;padding:10px;background:#fff;color:#6366f1;border:1.5px solid #6366f1;border-radius:10px;font-size:14px;font-weight:600}
+.btn-green{width:100%;padding:10px;background:#10b981;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600}
+.btn-tab{flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:600;border:none;background:#f3f4f6;color:#6b7280}
+.btn-tab.active{background:#6366f1;color:#fff}
+.nav-btn{flex:1;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer}
+.nav-btn span:first-child{font-size:18px}
+.nav-btn span:last-child{font-size:10px;font-weight:600;color:#9ca3af}
+.nav-btn.active span:last-child{color:#6366f1}
+.gasto-item{background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.bar-bg{height:5px;background:#f3f4f6;border-radius:3px;margin-top:3px}
+.bar-fill{height:5px;border-radius:3px}
+.mes-btn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid #e5e7eb;background:#fff;color:#6b7280;cursor:pointer}
+.mes-btn.active{background:#6366f1;color:#fff;border-color:#6366f1}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#ede9fe;color:#5b21b6}
+</style>
+</head>
+<body>
+<div style="max-width:440px;margin:0 auto">
+
+<div style="background:#6366f1;padding:18px 16px 14px;border-radius:0 0 16px 16px;margin-bottom:12px;color:#fff">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div>
+      <div style="font-size:17px;font-weight:700">💰 GastoApp</div>
+      <div id="mesLabel" style="font-size:12px;opacity:.8"></div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:12px;opacity:.8">Total mes</div>
+      <div id="totalARS" style="font-size:22px;font-weight:700">$0</div>
+      <div id="totalUSD" style="font-size:12px;opacity:.8">≈ USD 0</div>
+    </div>
+  </div>
+  <div id="blueBar" style="background:rgba(255,255,255,.18);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px">
+    💱 <span id="blueLabel">Blue: <b>$1.200</b> — tocá para editar</span>
+    <input id="blueInput" type="number" value="1200" style="display:none;background:transparent;border:none;border-bottom:1px solid white;color:white;font-size:13px;outline:none;width:80px;padding:0">
+  </div>
+</div>
+
+<div id="page" style="padding:0 12px 90px">
+
+  <div id="tab-cargar">
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px">Nuevo gasto</div>
+      <input id="desc" placeholder="Descripción" style="margin-bottom:9px">
+      <div style="display:flex;gap:8px;margin-bottom:9px">
+        <input id="monto" type="number" placeholder="Monto" style="flex:1;width:auto">
+        <select id="moneda" style="width:auto;padding:9px 8px">
+          <option>ARS</option><option>USD</option>
+        </select>
+      </div>
+      <select id="cat" style="margin-bottom:9px">
+        <option>🍔 Comida</option><option>🏠 Casa</option><option>🚗 Auto</option>
+        <option>💊 Salud</option><option>👗 Ropa</option><option>📱 Tech</option>
+        <option>🎓 Educacion</option><option>🎉 Ocio</option><option>💼 Trabajo</option><option>📦 Otro</option>
+      </select>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn-tab active" id="btnPersonal" onclick="setTipo('Personal')">Personal</button>
+        <button class="btn-tab" id="btnFamiliar" onclick="setTipo('Familiar')">Familiar</button>
+      </div>
+      <button class="btn-primary" onclick="agregar()">+ Agregar gasto</button>
+    </div>
+    <div id="lista"></div>
+  </div>
+
+  <div id="tab-resumen" style="display:none">
+    <div class="card" style="margin-bottom:10px">
+      <div style="font-size:13px;font-weight:600;color:#6b7280;margin-bottom:8px">VER MES</div>
+      <div id="mesSelectorRes" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div class="card" id="resumenCard"></div>
+    <div class="card" id="catCard"></div>
+    <button class="btn-green" onclick="exportCSV()" style="margin-bottom:12px">⬇ Exportar CSV (todos los meses)</button>
+  </div>
+
+  <div id="tab-grafico" style="display:none">
+    <div class="card" style="margin-bottom:10px">
+      <div style="font-size:13px;font-weight:600;color:#6b7280;margin-bottom:8px">VER MES</div>
+      <div id="mesSelectorGraf" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:8px">Distribución de gastos</div>
+      <div style="position:relative;height:260px"><canvas id="pie"></canvas></div>
+      <div id="pieLeyenda" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div id="tab-cambio" style="display:none">
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px">Conversor ARS ↔ USD Blue</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="btn-tab active" id="btnARSUSD" onclick="setDir('ARS_USD')">ARS → USD</button>
+        <button class="btn-tab" id="btnUSDars" onclick="setDir('USD_ARS')">USD → ARS</button>
+      </div>
+      <input id="convVal" type="number" placeholder="Monto" oninput="calcConv()" style="margin-bottom:12px">
+      <div style="background:#f3f4f6;border-radius:10px;padding:14px 16px;text-align:center">
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px">Resultado</div>
+        <div id="convResult" style="font-size:24px;font-weight:700;color:#6366f1">—</div>
+        <div id="convBlue" style="font-size:12px;color:#9ca3af;margin-top:4px">Blue: $1.200</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7eb;display:flex;z-index:99">
+  <button class="nav-btn active" id="nav-cargar" onclick="goTab('cargar')"><span>➕</span><span>Cargar</span></button>
+  <button class="nav-btn" id="nav-resumen" onclick="goTab('resumen')"><span>📋</span><span>Resumen</span></button>
+  <button class="nav-btn" id="nav-grafico" onclick="goTab('grafico')"><span>🥧</span><span>Gráfico</span></button>
+  <button class="nav-btn" id="nav-cambio" onclick="goTab('cambio')"><span>💱</span><span>Cambio</span></button>
+</div>
+</div>
+
+<script>
+const COLORS=["#6366f1","#f59e0b","#10b981","#ef4444","#3b82f6","#8b5cf6","#ec4899","#14b8a6","#f97316","#94a3b8"];
+const CATS=["🍔 Comida","🏠 Casa","🚗 Auto","💊 Salud","👗 Ropa","📱 Tech","🎓 Educacion","🎉 Ocio","💼 Trabajo","📦 Otro"];
+
+let gastos=[], blue=1200, tipo="Personal", dir="ARS_USD", tab="cargar", mesFiltro="";
+
+function save(){localStorage.setItem("gastoapp_v2",JSON.stringify({gastos,blue}));}
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem("gastoapp_v2")||"{}");
+    if(d.gastos)gastos=d.gastos;
+    if(d.blue)blue=d.blue;
+  }catch(e){}
+}
+
+load();
+mesFiltro=mesActual();
+
+const fmtARS=n=>"$"+Math.round(n).toLocaleString("es-AR");
+function mesActual(){return new Date().toISOString().slice(0,7);}
+const toARS=g=>g.moneda==="ARS"?g.monto:g.monto*blue;
+function gmFiltrado(){return gastos.filter(g=>g.fecha.startsWith(mesFiltro));}
+
+function mesesDisponibles(){
+  const set=new Set(gastos.map(g=>g.fecha.slice(0,7)));
+  const cur=mesActual();
+  set.add(cur);
+  return [...set].sort().reverse();
+}
+
+function nombreMes(m){
+  const [y,mo]=m.split("-");
+  return new Date(y,mo-1,1).toLocaleDateString("es-AR",{month:"short",year:"2-digit"});
+}
+
+document.getElementById("mesLabel").textContent=new Date().toLocaleDateString("es-AR",{month:"long",year:"numeric"});
+document.getElementById("blueLabel").innerHTML="Blue: <b>$"+blue.toLocaleString("es-AR")+"</b> — tocá para editar";
+document.getElementById("blueInput").value=blue;
+document.getElementById("convBlue").textContent="Blue: $"+blue.toLocaleString("es-AR");
+
+document.getElementById("blueBar").onclick=()=>{
+  document.getElementById("blueInput").style.display="inline-block";
+  document.getElementById("blueLabel").style.display="none";
+  document.getElementById("blueInput").focus();
+};
+document.getElementById("blueInput").onblur=()=>{
+  const v=parseFloat(document.getElementById("blueInput").value)||blue;
+  blue=v; save();
+  document.getElementById("blueInput").style.display="none";
+  document.getElementById("blueLabel").style.display="inline";
+  document.getElementById("blueLabel").innerHTML="Blue: <b>$"+v.toLocaleString("es-AR")+"</b> — tocá para editar";
+  document.getElementById("convBlue").textContent="Blue: $"+v.toLocaleString("es-AR");
+  render();
+};
+
+function setTipo(t){
+  tipo=t;
+  document.getElementById("btnPersonal").className="btn-tab"+(t==="Personal"?" active":"");
+  document.getElementById("btnFamiliar").className="btn-tab"+(t==="Familiar"?" active":"");
+}
+function setDir(d){
+  dir=d;
+  document.getElementById("btnARSUSD").className="btn-tab"+(d==="ARS_USD"?" active":"");
+  document.getElementById("btnUSDars").className="btn-tab"+(d==="USD_ARS"?" active":"");
+  calcConv();
+}
+function calcConv(){
+  const v=parseFloat(document.getElementById("convVal").value)||0;
+  const r=dir==="ARS_USD"?v/blue:v*blue;
+  document.getElementById("convResult").textContent=dir==="ARS_USD"?"USD "+r.toFixed(2):"$"+Math.round(r).toLocaleString("es-AR");
+}
+
+function agregar(){
+  const desc=document.getElementById("desc").value.trim();
+  const monto=parseFloat(document.getElementById("monto").value);
+  if(!desc||!monto)return;
+  gastos.push({desc,monto,moneda:document.getElementById("moneda").value,cat:document.getElementById("cat").value,tipo,id:Date.now(),fecha:new Date().toISOString()});
+  document.getElementById("desc").value="";
+  document.getElementById("monto").value="";
+  save(); render();
+}
+function eliminar(id){gastos=gastos.filter(g=>g.id!==id);save();render();}
+
+function goTab(t){
+  tab=t;
+  ["cargar","resumen","grafico","cambio"].forEach(x=>{
+    document.getElementById("tab-"+x).style.display=x===t?"block":"none";
+    document.getElementById("nav-"+x).className="nav-btn"+(x===t?" active":"");
+  });
+  if(t==="grafico")setTimeout(drawPie,50);
+  render();
+}
+
+function renderMesSelector(containerId){
+  const meses=mesesDisponibles();
+  const el=document.getElementById(containerId);
+  el.innerHTML=meses.map(m=>`<button class="mes-btn${m===mesFiltro?" active":""}" onclick="setMes('${m}')">${nombreMes(m)}</button>`).join("");
+}
+
+function setMes(m){
+  mesFiltro=m;
+  document.getElementById("mesLabel").textContent=new Date(m+"-15").toLocaleDateString("es-AR",{month:"long",year:"numeric"});
+  render();
+  if(tab==="grafico")setTimeout(drawPie,50);
+}
+
+function exportCSV(){
+  if(!gastos.length){alert("No hay gastos para exportar.");return;}
+  const rows=[["Fecha","Descripcion","Categoria","Tipo","Monto","Moneda","Monto ARS"]];
+  [...gastos].sort((a,b)=>a.fecha.localeCompare(b.fecha)).forEach(g=>{
+    rows.push([
+      g.fecha.slice(0,10),
+      g.desc,
+      g.cat.replace(/[^\w\s]/g,"").trim(),
+      g.tipo,
+      g.monto,
+      g.moneda,
+      Math.round(toARS(g))
+    ]);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download="GastoApp_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function render(){
+  const list=gmFiltrado();
+  const total=list.reduce((s,g)=>s+toARS(g),0);
+  document.getElementById("totalARS").textContent=fmtARS(total);
+  document.getElementById("totalUSD").textContent="≈ USD "+Math.round(total/blue);
+
+  // lista mes actual en tab cargar
+  const listaMes=gastos.filter(g=>g.fecha.startsWith(mesActual()));
+  const ul=document.getElementById("lista");
+  ul.innerHTML=listaMes.length===0
+    ?'<div style="text-align:center;color:#9ca3af;margin-top:32px;font-size:14px">Sin gastos este mes 🧾</div>'
+    :[...listaMes].reverse().map(g=>`
+      <div class="gasto-item">
+        <div>
+          <div style="font-size:14px;font-weight:600">${g.cat.split(" ")[0]} ${g.desc}</div>
+          <div style="font-size:12px;color:#9ca3af">${g.cat.split(" ").slice(1).join(" ")} · ${g.tipo} · <span style="color:#6b7280">${g.fecha.slice(0,10)}</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="text-align:right">
+            <div style="font-size:14px;font-weight:700;color:#ef4444">${g.moneda==="ARS"?fmtARS(g.monto):"USD "+g.monto.toFixed(2)}</div>
+            ${g.moneda==="USD"?`<div style="font-size:11px;color:#9ca3af">${fmtARS(g.monto*blue)}</div>`:""}
+          </div>
+          <button onclick="eliminar(${g.id})" style="background:none;border:none;color:#d1d5db;font-size:20px;cursor:pointer;padding:0">×</button>
+        </div>
+      </div>`).join("");
+
+  // selectores de mes
+  if(document.getElementById("mesSelectorRes"))renderMesSelector("mesSelectorRes");
+  if(document.getElementById("mesSelectorGraf"))renderMesSelector("mesSelectorGraf");
+
+  // resumen
+  let rc=`<div style="font-size:14px;font-weight:600;margin-bottom:4px">Resumen</div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:12px">${new Date(mesFiltro+"-15").toLocaleDateString("es-AR",{month:"long",year:"numeric"})}</div>`;
+  ["Personal","Familiar"].forEach(t=>{
+    const tot=list.filter(g=>g.tipo===t).reduce((s,g)=>s+toARS(g),0);
+    rc+=`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6">
+      <span style="color:#6b7280">${t==="Personal"?"👤":"👨‍👩‍👧"} ${t}</span>
+      <span style="font-weight:600">${fmtARS(tot)}</span></div>`;
+  });
+  rc+=`<div style="display:flex;justify-content:space-between;padding:10px 0 0;font-weight:600">
+    <span style="color:#6366f1">TOTAL</span>
+    <div style="text-align:right">
+      <div style="color:#6366f1">${fmtARS(total)}</div>
+      <div style="font-size:12px;color:#9ca3af">≈ USD ${Math.round(total/blue)}</div>
+    </div></div>`;
+  if(document.getElementById("resumenCard"))document.getElementById("resumenCard").innerHTML=rc;
+
+  let cc=`<div style="font-size:14px;font-weight:600;margin-bottom:12px">Por categoría</div>`;
+  CATS.forEach((cat,i)=>{
+    const tot=list.filter(g=>g.cat===cat).reduce((s,g)=>s+toARS(g),0);
+    if(!tot)return;
+    const pct=total>0?Math.round(tot/total*100):0;
+    cc+=`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+        <span style="color:#6b7280">${cat}</span>
+        <span style="font-weight:600">${pct}% · ${fmtARS(tot)}</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${COLORS[i]}"></div></div></div>`;
+  });
+  if(!list.length)cc+='<div style="color:#9ca3af;font-size:13px;text-align:center;padding:20px">Sin datos para este mes</div>';
+  if(document.getElementById("catCard"))document.getElementById("catCard").innerHTML=cc;
+}
+
+function drawPie(){
+  const list=gmFiltrado();
+  const total=list.reduce((s,g)=>s+toARS(g),0);
+  const canvas=document.getElementById("pie");
+  if(!canvas)return;
+  const ctx=canvas.getContext("2d");
+  const wrap=canvas.parentElement;
+  canvas.width=wrap.clientWidth; canvas.height=260;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const data=CATS.map((cat,i)=>({cat,val:list.filter(g=>g.cat===cat).reduce((s,g)=>s+toARS(g),0),color:COLORS[i]})).filter(d=>d.val>0);
+  if(!data.length){
+    ctx.fillStyle="#9ca3af";ctx.font="14px system-ui";ctx.textAlign="center";
+    ctx.fillText("Sin datos para este mes",canvas.width/2,130);
+    document.getElementById("pieLeyenda").innerHTML=""; return;
+  }
+  const cx=canvas.width/2,cy=130,r=100;
+  let angle=-Math.PI/2;
+  data.forEach(d=>{
+    const slice=(d.val/total)*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+slice);
+    ctx.closePath();ctx.fillStyle=d.color;ctx.fill();
+    ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke();
+    const mid=angle+slice/2;
+    const pct=Math.round(d.val/total*100);
+    if(pct>4){ctx.fillStyle="#fff";ctx.font="bold 12px system-ui";ctx.textAlign="center";ctx.fillText(pct+"%",cx+Math.cos(mid)*r*.65,cy+Math.sin(mid)*r*.65+4);}
+    angle+=slice;
+  });
+  let ley="";
+  data.forEach(d=>{
+    const pct=Math.round(d.val/total*100);
+    ley+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px">
+      <div style="width:12px;height:12px;border-radius:3px;background:${d.color};flex-shrink:0"></div>
+      <span style="color:#6b7280;flex:1">${d.cat}</span>
+      <span style="font-weight:600">${pct}% · ${fmtARS(d.val)}</span></div>`;
+  });
+  document.getElementById("pieLeyenda").innerHTML=ley;
+}
+
+render();
+</script>
+</body>
+</html>
